@@ -51,7 +51,7 @@ def cityCode(text):
 parser = reqparse.RequestParser()
 parser.add_argument('city', type=str, help='Location not found', location='args')
 parser.add_argument('latlng', type=str, help='Location not provided', location='args')
-
+parser.add_argument('page', type=int,location='args')
 
 def getWeekends():
 	print(datetime.today().day)
@@ -59,9 +59,9 @@ def getWeekends():
 	print(weekno)
 	next_friday = datetime.today() + timedelta(days = 4 - weekno if weekno < 4 else 11 - weekno )
 	weekends = [next_friday]
-	# for i in range(3):
-	# 	weekends.append( next_friday + timedelta(days = 7) )
-	# 	next_friday = next_friday + timedelta(days = 7) 
+	for i in range(3):
+		weekends.append( next_friday + timedelta(days = 7) )
+		next_friday = next_friday + timedelta(days = 7) 
 	# print(weekends)
 	return weekends
 
@@ -69,6 +69,10 @@ def getWeekends():
 class RoutesApi(Resource):
 	def get(self):
 			args = parser.parse_args()
+			page = 0
+			if 'page' in request.args:
+				page = args['page']
+			
 			if('latlng' in request.args):
 				city = cityCode(getCity(args['latlng']))
 				
@@ -102,8 +106,8 @@ class RoutesApi(Resource):
 						a['Photo'] = getimage(a['To'])
 						d1 = datetime.strptime(u['OutboundLeg']['DepartureDate'], '%Y-%m-%dT%H:%M:%S')
 						d2 = datetime.strptime(u['InboundLeg']['DepartureDate'], '%Y-%m-%dT%H:%M:%S')
-						a['departure'] = d1.strftime("%Y-%m-%d %H:%M")
-						a['arrival']  = d2.strftime("%Y-%m-%d %H:%M")
+						a['departure'] = d1.strftime("%Y-%m-%d")
+						a['arrival']  = d2.strftime("%Y-%m-%d")
 						a['date'] = "{}-{} {}".format(d1.day, d2.day, d1.strftime("%b"))
 						result.append(a)
 					
@@ -111,7 +115,7 @@ class RoutesApi(Resource):
 			new_result = sorted(result,  key=lambda k: k['MinPrice'])
 			
 			
-			return jsonify(new_result[-10:])
+			return jsonify(new_result[page*10: min(len(new_result), (page+1)*10 )] )
 			
 			
 
@@ -141,13 +145,7 @@ class SingleRouteApi(Resource):
 			result = next_resp.json() 
 			print(result['Status'] )
 			time.sleep(10)
-		# ite = result['Itineraries'][0]
-		# outleg = ite['OutboundLegId']
-		# parts = outleg.split('-')
-		# _from = parts[0]
-		# _fromDate= parts[1]
-		# _to   = parts[3]
-		# _toDate
+		
 		return result
 			
 if __name__ == "__main__":
