@@ -96,12 +96,14 @@ class RoutesApi(Resource):
 						a = dict()
 						a['MinPrice'] = u['MinPrice']
 						a['From'] = places[u['OutboundLeg']['OriginId']]['CityName']
-						a['FromCode'] = places[u['OutboundLeg']['OriginId']]['CityId']
+						a['FromCode'] = places[u['OutboundLeg']['OriginId']]['CityId'] + '-sky'
 						a['To'] = places[u['InboundLeg']['OriginId']]['CityName']
-						a['ToCode'] = places[u['InboundLeg']['OriginId']]['CityId']
+						a['ToCode'] = places[u['InboundLeg']['OriginId']]['CityId'] + '-sky'
 						a['Photo'] = getimage(a['To'])
 						d1 = datetime.strptime(u['OutboundLeg']['DepartureDate'], '%Y-%m-%dT%H:%M:%S')
 						d2 = datetime.strptime(u['InboundLeg']['DepartureDate'], '%Y-%m-%dT%H:%M:%S')
+						a['departure'] = d1.strftime("%Y-%m-%d %H:%M")
+						a['arrival']  = d2.strftime("%Y-%m-%d %H:%M")
 						a['date'] = "{}-{} {}".format(d1.day, d2.day, d1.strftime("%b"))
 						result.append(a)
 					
@@ -109,7 +111,7 @@ class RoutesApi(Resource):
 			new_result = sorted(result,  key=lambda k: k['MinPrice'])
 			
 			
-			return jsonify(new_result[-7:])
+			return jsonify(new_result[-10:])
 			
 			
 
@@ -131,16 +133,13 @@ class SingleRouteApi(Resource):
 		print(resp.headers)
 		if 'Location' not in resp.headers:
 			abort(405)
-		location = resp.headers['Location'] + '?apikey=ha796565994483997905142768862425&sortType=price&sortOrder=asc&stops=0&pageIndex=0&pageSize=10'
+		location = resp.headers['Location'] + '?apikey=ha796565994483997905142768862425&sortType=price&sortOrder=asc&stops=0'
 		next_resp = requests.get(location)
 		result = next_resp.json() 
-		while( result['Status'] is not 'UpdatesComplete' ):
+		while( 'UpdatesComplete' not in result['Status']  ):
 			next_resp = requests.get(location)
 			result = next_resp.json() 
 			print(result['Status'] )
-			if result['Status'] is 'UpdatesComplete':
-				print("OOOjadsfasad")
-				break
 			time.sleep(10)
 		# ite = result['Itineraries'][0]
 		# outleg = ite['OutboundLegId']
