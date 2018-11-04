@@ -123,30 +123,46 @@ class RoutesApi(Resource):
 @api.route('/route/<origin>/<destination>/<outbound>/<inbound>')
 class SingleRouteApi(Resource):
 	def get(self,origin, destination, outbound, inbound):
-		url = 'http://partners.api.skyscanner.net/apiservices/pricing/v1.0'
-		data = dict(country = 'GB',
-			locale = 'en-US',
-			currency = 'eur',
-			apikey  = 'ha796565994483997905142768862425',
-			originPlace = origin,
-			destinationPlace = destination,
-			OutboundDate = outbound,
-			InboundDate = inbound)
-		headers = {'content-type': 'application/x-www-form-urlencoded'}
-		resp = requests.post(url = url, data=data, headers = headers)
-		print(resp.headers)
-		if 'Location' not in resp.headers:
-			abort(405)
-		location = resp.headers['Location'] + '?apikey=ha796565994483997905142768862425&sortType=price&sortOrder=asc&stops=0'
-		next_resp = requests.get(location)
-		result = next_resp.json() 
-		while( 'UpdatesComplete' not in result['Status']  ):
-			next_resp = requests.get(location)
-			result = next_resp.json() 
-			print(result['Status'] )
-			time.sleep(10)
+		url = 'http://partners.api.skyscanner.net/apiservices/browseroutes/v1.0/GB/eur/en-US/{}/{}/{}/{}?apikey=ha796565994483997905142768862425&direct=true'.format(origin, destination, outbound, inbound)
+		print(url)
+		# data = dict(country = 'GB',
+		# 	locale = 'en-US',
+		# 	currency = 'eur',
+		# 	apikey  = 'ha796565994483997905142768862425',
+		# 	originPlace = origin,
+		# 	destinationPlace = destination,
+		# 	OutboundDate = outbound,
+		# 	InboundDate = inbound)
+		# headers = {'content-type': 'application/x-www-form-urlencoded'}
+		resp = requests.get(url = url)
+		# print(resp.headers)
+		# if 'Location' not in resp.headers:
+		# 	abort(405)
+		# location = resp.headers['Location'] + '?apikey=ha796565994483997905142768862425&sortType=price&sortOrder=asc&stops=0'
+		# next_resp = requests.get(location)
+		result = resp.json() 
+		# while( 'UpdatesComplete' not in result['Status']  ):
+		# 	next_resp = requests.get(location)
+		# 	result = next_resp.json() 
+		# 	print(result['Status'] )
+		# 	time.sleep(10)
 		
-		return result
+		
+		places = dict()
+		if 'Places' in result.keys():
+					for v in result['Places'] :
+						places[v['PlaceId']] = v
+		
+		min_price = 1000000
+		min_quote = {}
+		for u in result['Quotes']:
+			if( u['MinPrice'] < min_price):
+				min_price = u['MinPrice']
+				min_quote = u
+		
+		u['from'] = places[u['InboundLeg']['OriginId']]['CityName']
+		
+		return jsonify(min_quote)
 			
 if __name__ == "__main__":
     app.run( port=8080, host='0.0.0.0', debug=True)
