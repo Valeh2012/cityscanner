@@ -9,7 +9,7 @@ Flask==1.0.2
 flask-restplus==0.12.1
 idna==2.7
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2>=2.10.1
 jsonschema==2.6.0
 MarkupSafe==1.0
 pkg-resources==0.0.0
@@ -18,5 +18,5 @@ pyOpenSSL==18.0.0
 pytz==2018.7
 requests==2.20.0
 six==1.11.0
-urllib3==1.24.1
+urllib3>=1.24.2
 Werkzeug==0.15.3
